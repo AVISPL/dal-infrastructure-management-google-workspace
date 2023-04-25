@@ -1,2 +1,2 @@
 # dal-infrastructure-management-google-workspace
-DAL adapter for monitoring Chrome OS devices through Google Workspace
+DAL adapter for monitoring Chrome OS and Google Meet devices through Google Workspace
