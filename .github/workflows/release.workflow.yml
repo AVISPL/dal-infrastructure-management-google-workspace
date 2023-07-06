@@ -4,10 +4,7 @@ on:
   push:
     branches:
       - main
-      - master
-      - develop
-      - 'feature/**'
-      - 'bugfix/**'
+      - 'release/**'
       - 'hotfix/**'
 jobs:
   prep:
@@ -52,7 +49,7 @@ jobs:
       - name: Version set
         run: mvn versions:set versions:commit -DnewVersion=${{ needs.versiongenerate.outputs.version }}
       - name: Build and test with Maven
-        run: mvn clean install -DskipTests
+        run: mvn clean install -DkipTests
       - name: PMD check
         run: mvn pmd:check
       - id: getfilename
