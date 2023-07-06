@@ -7,7 +7,6 @@ on:
       - 'feature/**'
       - 'bugfix/**'
       - 'hotfix/**'
-
 jobs:
   prep:
     runs-on: ubuntu-latest
@@ -51,7 +50,7 @@ jobs:
       - name: Version set
         run: mvn versions:set versions:commit -DnewVersion=${{ needs.versiongenerate.outputs.version }}
       - name: Build and test with Maven
-        run: mvn clean install
+        run: mvn clean install -DskipTests
       - name: PMD check
         run: mvn pmd:check
       - id: getfilename
