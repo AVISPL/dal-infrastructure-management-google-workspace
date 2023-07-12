@@ -11,15 +11,12 @@ import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,12 +51,10 @@ import com.avispl.symphony.dal.aggregator.parser.AggregatedDeviceProcessor;
 import com.avispl.symphony.dal.aggregator.parser.PropertiesMapping;
 import com.avispl.symphony.dal.aggregator.parser.PropertiesMappingParser;
 import com.avispl.symphony.dal.communicator.RestCommunicator;
-import com.avispl.symphony.dal.communicator.aggregator.common.GoogleCPUTemperatureMetric;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceAggregatedDeviceMetric;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceCommand;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceConstant;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceOrgUnitMetric;
-import com.avispl.symphony.dal.communicator.aggregator.dto.aggregatedInfo.CPUTemperature;
 import com.avispl.symphony.dal.communicator.aggregator.dto.aggregatedInfo.KnownNetwork;
 import com.avispl.symphony.dal.communicator.aggregator.dto.systemInfo.OrgUnit;
 import com.avispl.symphony.dal.util.StringUtils;
@@ -68,7 +63,7 @@ import com.avispl.symphony.dal.util.StringUtils;
  * GoogleWorkspaceAggregatorDevice class provides during the monitoring and controlling process
  * Supported features are:
  * Monitoring Aggregator Device:
- <ul>
+ * <ul>
  * <li> - ChromeOSDevicesCount</li>
  * <li> - OrganizationalUnitsCount</li>
  * <li> - OrganizationalUnits#ChromeOSDevicesCount</li>
@@ -767,7 +762,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				if (aggregatedDevice.getDeviceModel().contains(GoogleWorkspaceConstant.CHROMEBOOK)) {
 					aggregatedDevice.setDeviceModel(GoogleWorkspaceConstant.CHROMEBOOK);
 				}
-				if(!mappingStatistic.containsKey(GoogleWorkspaceConstant.VOLUME_LEVEL)){
+				if (!mappingStatistic.containsKey(GoogleWorkspaceConstant.VOLUME_LEVEL)) {
 					aggregatedDevice.setDeviceOnline(false);
 				}
 				mapMonitoringProperty(mappingStatistic, stats);
