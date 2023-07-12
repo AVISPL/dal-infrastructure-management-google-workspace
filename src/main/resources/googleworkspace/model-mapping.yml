@@ -1,0 +1,39 @@
+models:
+  - model:
+      name: Generic
+      vendor: GoogleWorkspace
+      filter: true
+      mapping:
+        deviceId: get("deviceId")
+        deviceName: get("serialNumber")
+        deviceModel: get("model")
+        deviceOnline: get("status").asText().equals("ACTIVE") == true
+      properties:
+        Status: get("status")
+        SerialNumber: get("serialNumber")
+        CPUModel: get("cpuInfo")?.get(0).get("model")
+        Architecture: get("cpuInfo")?.get(0).get("architecture")
+        MACAddress: get("macAddress")
+        ChromeOSVersion: get("osVersion")
+        PlatformVersion: get("platformVersion")
+        FirmwareVersion: get("firmwareVersion")
+        TPMFirmwareVersion: get("tpmVersionInfo")?.get("firmwareVersion")
+        BootMode: get("bootMode")
+        EnrollmentTime: get("lastEnrollmentTime")
+        AutoUpdateExpiration: get("autoUpdateExpiration")
+        AnnotatedUser: get("annotatedUser")
+        OrgUnit: get("orgUnitPath")
+        MemoryTotal(GB): get("systemRamTotal")
+        LastSync: get("lastSync")
+        VolumeLevel(%): get("audioStatusReport")
+
+        MemoryFree(GB): get("systemRamFreeReports")
+        CPUUtilization(%): get("cpuStatusReports")
+        RecentActivity: get("activeTimeRanges")
+        RecentUsers: get("recentUsers")
+        Core1(C): get("cpuStatusReports")
+        Core0(C): get("cpuStatusReports")
+        PackageId0(C): get("cpuStatusReports")
+        IwlWifi_1(C): get("cpuStatusReports")
+        IPAddress: get("lastKnownNetwork")
+        WANIPAddress: get("lastKnownNetwork")

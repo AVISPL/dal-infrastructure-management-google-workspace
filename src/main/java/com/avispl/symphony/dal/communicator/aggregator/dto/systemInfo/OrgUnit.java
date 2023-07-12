@@ -2,7 +2,7 @@
  * Copyright (c) 2023 AVI-SPL, Inc. All Rights Reserved.
  */
 
-package com.avispl.symphony.dal.communicator.aggregator.dto;
+package com.avispl.symphony.dal.communicator.aggregator.dto.systemInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

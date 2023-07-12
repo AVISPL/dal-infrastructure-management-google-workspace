@@ -16,4 +16,5 @@ public class GoogleWorkspaceCommand {
 	public static final String ORG_UNIT_COMMAND = "/admin/directory/v1/customer/{CustomerId}/orgunits";
 	public static final String CHROME_OS_COMMAND = "/admin/directory/v1/customer/{CustomerId}/devices/chromeos?orgUnitPath=";
 	public static final String PARENT_ORG_UNIT_COMMAND = "/admin/directory/v1/customer/{CustomerId}/orgunits/";
+	public static final String TELEMETRY_COMMAND = "https://chromemanagement.googleapis.com/v1/customers/{CustomerId}/telemetry/devices?pageSize=500&readMask=deviceId,audioStatusReport";
 }

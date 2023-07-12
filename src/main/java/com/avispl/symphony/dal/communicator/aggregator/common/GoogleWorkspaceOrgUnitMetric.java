@@ -4,7 +4,7 @@
 
 package com.avispl.symphony.dal.communicator.aggregator.common;
 
-import com.avispl.symphony.dal.communicator.aggregator.dto.OrgUnit;
+import com.avispl.symphony.dal.communicator.aggregator.dto.systemInfo.OrgUnit;
 
 /**
  * GoogleWorkspaceOrgUnitMetric include different metrics for Google Workspace organizational units.
