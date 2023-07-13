@@ -107,12 +107,36 @@ public class GoogleWorkspaceCommunicatorTest {
 	 */
 	@Test
 	void testGetMultipleStatistics() throws Exception {
+		googleWorkspaceCommunicator.setCurrentOrgUnitName("");
+		googleWorkspaceCommunicator.setFilterOrgUnit("");
+		googleWorkspaceCommunicator.setFilterSerialNumber("");
 		googleWorkspaceCommunicator.getMultipleStatistics();
 		googleWorkspaceCommunicator.retrieveMultipleStatistics();
 		Thread.sleep(30000);
 		List<AggregatedDevice> aggregatedDeviceList = googleWorkspaceCommunicator.retrieveMultipleStatistics();
 		Assert.assertEquals(1, aggregatedDeviceList.size());
 		Assert.assertEquals(27, aggregatedDeviceList.get(0).getProperties().size());
+	}
+
+	/**
+	 * Unit test for the {@code getMultipleStatistics()} method with historical properties.
+	 *
+	 * This test verifies the behavior of the {@code getMultipleStatistics()} method in the GoogleWorkspaceCommunicator class when historical properties are set.
+	 * It sets the historical properties to "Core1(C),Core0(C),PackageId0(C),IwlWifi_1(C)".
+	 * Finally, it retrieves the list of aggregated devices and asserts that the list size is 1, the properties size is 23, and the dynamic statistics size is 4.
+	 *
+	 * @throws Exception if an exception occurs during the test.
+	 */
+	@Test
+	void testGetMultipleStatisticsWithHistorical() throws Exception {
+		googleWorkspaceCommunicator.setHistoricalProperties("Core1(C),Core0(C),PackageId0(C),IwlWifi_1(C)");
+		googleWorkspaceCommunicator.getMultipleStatistics();
+		googleWorkspaceCommunicator.retrieveMultipleStatistics();
+		Thread.sleep(30000);
+		List<AggregatedDevice> aggregatedDeviceList = googleWorkspaceCommunicator.retrieveMultipleStatistics();
+		Assert.assertEquals(1, aggregatedDeviceList.size());
+		Assert.assertEquals(23, aggregatedDeviceList.get(0).getProperties().size());
+		Assert.assertEquals(4, aggregatedDeviceList.get(0).getDynamicStatistics().size());
 	}
 
 	/**

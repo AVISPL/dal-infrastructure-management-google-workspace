@@ -11,12 +11,15 @@ import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,19 +54,22 @@ import com.avispl.symphony.dal.aggregator.parser.AggregatedDeviceProcessor;
 import com.avispl.symphony.dal.aggregator.parser.PropertiesMapping;
 import com.avispl.symphony.dal.aggregator.parser.PropertiesMappingParser;
 import com.avispl.symphony.dal.communicator.RestCommunicator;
+import com.avispl.symphony.dal.communicator.aggregator.common.GoogleCPUTemperatureMetric;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceAggregatedDeviceMetric;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceCommand;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceConstant;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceOrgUnitMetric;
+import com.avispl.symphony.dal.communicator.aggregator.dto.aggregatedInfo.CPUTemperature;
 import com.avispl.symphony.dal.communicator.aggregator.dto.aggregatedInfo.KnownNetwork;
 import com.avispl.symphony.dal.communicator.aggregator.dto.systemInfo.OrgUnit;
+import com.avispl.symphony.dal.communicator.aggregator.statistics.DynamicStatisticsDefinition;
 import com.avispl.symphony.dal.util.StringUtils;
 
 /**
  * GoogleWorkspaceAggregatorDevice class provides during the monitoring and controlling process
  * Supported features are:
  * Monitoring Aggregator Device:
- * <ul>
+ <ul>
  * <li> - ChromeOSDevicesCount</li>
  * <li> - OrganizationalUnitsCount</li>
  * <li> - OrganizationalUnits#ChromeOSDevicesCount</li>
@@ -275,6 +281,16 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	private Long expiresIn = 3000L * 1000;
 
 	/**
+	 * save nextToken for next request
+	 */
+	private String nextTokenChromeOS = GoogleWorkspaceConstant.EMPTY;
+
+	/**
+	 * save nextToken for next request
+	 */
+	private String nextTokenTelemetry = GoogleWorkspaceConstant.EMPTY;
+
+	/**
 	 * List of aggregated device
 	 */
 	private List<AggregatedDevice> aggregatedDeviceList = Collections.synchronizedList(new ArrayList<>());
@@ -303,6 +319,32 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * filter by Org Unit
 	 */
 	private String filterOrgUnit;
+
+	/**
+	 * Configurable property for historical properties, comma separated values kept as set locally
+	 */
+	private Set<String> historicalProperties = new HashSet<>();
+
+	/**
+	 * Retrieves {@link #historicalProperties}
+	 *
+	 * @return value of {@link #historicalProperties}
+	 */
+	public String getHistoricalProperties() {
+		return String.join(GoogleWorkspaceConstant.COMMA, this.historicalProperties);
+	}
+
+	/**
+	 * Sets {@link #historicalProperties} value
+	 *
+	 * @param historicalProperties new value of {@link #historicalProperties}
+	 */
+	public void setHistoricalProperties(String historicalProperties) {
+		this.historicalProperties.clear();
+		Arrays.asList(historicalProperties.split(GoogleWorkspaceConstant.COMMA)).forEach(propertyName -> {
+			this.historicalProperties.add(propertyName.trim());
+		});
+	}
 
 	/**
 	 * Sets {@link #currentOrgUnitName} value
@@ -630,10 +672,22 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			orgUnitList = objectMapper.readValue(orgUnitsResponse.get(GoogleWorkspaceConstant.ORGANIZATION_UNIT).toString(), new TypeReference<List<OrgUnit>>() {
 			});
 
-			JsonNode chromeOSResponse = this.doGet(
-					GoogleWorkspaceCommand.CHROME_OS_COMMAND.replace(GoogleWorkspaceConstant.PATH_VARIABLE_CUSTOMER_ID, customerId) + getDefaultFilterValueForNullData(filterOrgUnit), JsonNode.class);
+			String chromeOSCommand = GoogleWorkspaceCommand.CHROME_OS_COMMAND.replace(GoogleWorkspaceConstant.PATH_VARIABLE_CUSTOMER_ID, customerId)
+					.replace(GoogleWorkspaceConstant.PATH_VARIABLE_ORG_UNIT, getDefaultFilterValueForNullData(filterOrgUnit))
+					.replace(GoogleWorkspaceConstant.PATH_VARIABLE_SERIAL_NUMBER, getDefaultFilterValueForNullData(filterSerialNumber));
+
+			if (StringUtils.isNotNullOrEmpty(nextTokenChromeOS)) {
+				chromeOSCommand = chromeOSCommand + GoogleWorkspaceConstant.NEXT_TOKEN_REQUEST_PARAM + nextTokenChromeOS;
+			}
+			JsonNode chromeOSResponse = this.doGet(chromeOSCommand, JsonNode.class);
+
 			if (chromeOSResponse.has(GoogleWorkspaceConstant.CHROME_OS_DEVICE)) {
 				aggregatedDeviceResponse = chromeOSResponse.get(GoogleWorkspaceConstant.CHROME_OS_DEVICE);
+
+				nextTokenChromeOS = GoogleWorkspaceConstant.EMPTY;
+				if (chromeOSResponse.has(GoogleWorkspaceConstant.NEXT_TOKEN)) {
+					nextTokenChromeOS = chromeOSResponse.get(GoogleWorkspaceConstant.NEXT_TOKEN).asText();
+				}
 			} else {
 				aggregatedDeviceResponse = objectMapper.createObjectNode();
 			}
@@ -708,7 +762,15 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	private void populateDeviceDetails() {
 		try {
 			String telemetryCommand = GoogleWorkspaceCommand.TELEMETRY_COMMAND.replace(GoogleWorkspaceConstant.PATH_VARIABLE_CUSTOMER_ID, customerId);
+			if (StringUtils.isNotNullOrEmpty(nextTokenTelemetry)) {
+				telemetryCommand = telemetryCommand + GoogleWorkspaceConstant.NEXT_TOKEN_REQUEST_PARAM + nextTokenTelemetry;
+			}
 			JsonNode telemetryResponse = doGet(telemetryCommand, JsonNode.class);
+
+			nextTokenTelemetry = GoogleWorkspaceConstant.EMPTY;
+			if (telemetryResponse.has(GoogleWorkspaceConstant.NEXT_TOKEN)) {
+				nextTokenTelemetry = telemetryResponse.get(GoogleWorkspaceConstant.NEXT_TOKEN).asText();
+			}
 
 			for (JsonNode jsonNode : aggregatedDeviceResponse) {
 				String id = jsonNode.get(GoogleWorkspaceConstant.DEVICE_ID).asText();
@@ -757,17 +819,20 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		synchronized (aggregatedDeviceList) {
 			for (AggregatedDevice aggregatedDevice : aggregatedDeviceList) {
 				Map<String, String> mappingStatistic = aggregatedDevice.getProperties();
+				Map<String, String> dynamics = new HashMap<>();
 				Map<String, String> stats = new HashMap<>();
 				aggregatedDevice.setDeviceName(aggregatedDevice.getDeviceModel() + " (" + aggregatedDevice.getDeviceName() + ")");
 				if (aggregatedDevice.getDeviceModel().contains(GoogleWorkspaceConstant.CHROMEBOOK)) {
 					aggregatedDevice.setDeviceModel(GoogleWorkspaceConstant.CHROMEBOOK);
 				}
-				if (!mappingStatistic.containsKey(GoogleWorkspaceConstant.VOLUME_LEVEL)) {
+				if(!mappingStatistic.containsKey(GoogleWorkspaceConstant.VOLUME_LEVEL)){
 					aggregatedDevice.setDeviceOnline(false);
 				}
 				mapMonitoringProperty(mappingStatistic, stats);
+				mapDynamicStatistic(mappingStatistic, stats, dynamics);
 
 				aggregatedDevice.setProperties(stats);
+				aggregatedDevice.setDynamicStatistics(dynamics);
 				resultAggregatedDeviceList.add(aggregatedDevice);
 			}
 		}
@@ -878,6 +943,53 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 					break;
 				default:
 					stats.put(name, value);
+			}
+		}
+	}
+
+	/**
+	 * Maps dynamic statistics to the appropriate properties in the stats and dynamic maps.
+	 *
+	 * @param mappingStatistic The mapping of statistic names to their corresponding values.
+	 * @param stats The stats map to populate with the mapped properties.
+	 * @param dynamic The dynamic map to populate with the mapped properties.
+	 */
+	private void mapDynamicStatistic(Map<String, String> mappingStatistic, Map<String, String> stats, Map<String, String> dynamic) {
+		String value;
+		String name;
+		String propertyName;
+		JsonNode jsonNodeValue;
+		for (DynamicStatisticsDefinition dynamicItem : DynamicStatisticsDefinition.values()) {
+			name = dynamicItem.getName();
+			value = getDefaultValueForNullData(mappingStatistic.get(name));
+			propertyName = GoogleWorkspaceConstant.CPU_TEMPERATURE_GROUP + name;
+
+			jsonNodeValue = getJsonNodeValue(value);
+			if (jsonNodeValue != null) {
+				JsonNode lastObject = jsonNodeValue.get(jsonNodeValue.size() - 1).get(GoogleWorkspaceConstant.CPU_TEMPERATURE_INFO);
+				List<CPUTemperature> cpuTemperatures = convertJsonNodeToList(lastObject, new TypeReference<List<CPUTemperature>>() {
+				});
+				if (!cpuTemperatures.isEmpty()) {
+					String label = GoogleCPUTemperatureMetric.getByName(name).getValue();
+					int temperature = cpuTemperatures.stream().filter(cpuTemperature -> cpuTemperature.getLabel().equals(label)).map(CPUTemperature::getTemperature).findFirst()
+							.orElse(0);
+
+					boolean propertyListed = false;
+					if (!historicalProperties.isEmpty()) {
+						if (propertyName.contains(GoogleWorkspaceConstant.HASH)) {
+							propertyListed = historicalProperties.contains(propertyName.split(GoogleWorkspaceConstant.HASH)[1]);
+						} else {
+							propertyListed = historicalProperties.contains(propertyName);
+						}
+					}
+					if (propertyListed) {
+						dynamic.put(propertyName, String.valueOf(temperature));
+					} else {
+						stats.put(propertyName, String.valueOf(temperature));
+					}
+				}
+			} else {
+				stats.put(name, GoogleWorkspaceConstant.NONE);
 			}
 		}
 	}

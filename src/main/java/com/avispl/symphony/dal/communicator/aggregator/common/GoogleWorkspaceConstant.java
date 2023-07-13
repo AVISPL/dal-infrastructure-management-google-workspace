@@ -22,6 +22,7 @@ public class GoogleWorkspaceConstant {
 	public static final String ORG_UNIT_PATH = "orgUnitPath";
 	public static final String DEVICE_ID = "deviceId";
 	public static final String DEVICES = "devices";
+	public static final String CPU_TEMPERATURE_INFO = "cpuTemperatureInfo";
 	public static final String SYSTEM_RAM_FREE_INFO = "systemRamFreeInfo";
 	public static final String CPU_UTILIZATION_PERCENTAGE_INFO = "cpuUtilizationPercentageInfo";
 	public static final String EMAIL = "email";
@@ -34,6 +35,7 @@ public class GoogleWorkspaceConstant {
 	public static final String CHROME_OS_DEVICES_COUNT = "ChromeOSDevicesCount";
 	public static final String ORGANIZATIONAL_UNIT_COUNT = "OrganizationalUnitsCount";
 	public static final String CHROMEBOOK = "Chromebook";
+	public static final String NEXT_TOKEN = "nextPageToken";
 	public static final String VOLUME_LEVEL = "VolumeLevel(%)";
 	public static final String DEFAULT_FORMAT_DATETIME = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	public static final String NEW_FORMAT_DATETIME = "MMM dd, yyyy, h:mm a";
@@ -41,6 +43,9 @@ public class GoogleWorkspaceConstant {
 	public static final String MODEL_MAPPING_AGGREGATED_DEVICE = "googleworkspace/model-mapping.yml";
 	public static final String OAUTH2_URL = "https://oauth2.googleapis.com/token";
 	public static final String PATH_VARIABLE_CUSTOMER_ID = "{CustomerId}";
+	public static final String PATH_VARIABLE_ORG_UNIT = "{orgUnit}";
+	public static final String PATH_VARIABLE_SERIAL_NUMBER = "{serialNumber}";
+	public static final String CPU_TEMPERATURE_GROUP = "CPUTemperature#";
 	public static final String ORGANIZATIONAL_UNITS_GROUP = "OrganizationalUnits#";
 	public static final String CLIENT_ID = "client_id";
 	public static final String CLIENT_SECRET = "client_secret";
@@ -51,6 +56,7 @@ public class GoogleWorkspaceConstant {
 	public static final String SPACE_REGEX = "\\s+";
 	public static final String COLON = ":";
 	public static final String COMMA = ",";
+	public static final String HASH = "#";
 	public static final String SLASH = "//";
 	public static final String SPACE = " ";
 	public static final String SECOND = " sec ";
