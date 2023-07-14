@@ -8,24 +8,24 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * GoogleWorkspaceKnownNetworkMetric contain different known network metrics for Google Workspace.
+ * NetworkEnum contain different known network metrics for Google Workspace.
  *
  * @author Harry / Symphony Dev Team<br>
  * Created on 6/20/2023
  * @since 1.0.0
  */
-public enum GoogleWorkspaceKnownNetworkMetric {
+public enum NetworkEnum {
 	IP_ADDRESS("IPAddress"),
 	WAN_IP_ADDRESS("WANIPAddress"),
 	;
 	private final String name;
 
 	/**
-	 * Constructs a GoogleWorkspaceKnownNetworkMetric enum constant with the specified name.
+	 * Constructs a NetworkEnum enum constant with the specified name.
 	 *
 	 * @param name the name of the known network metric
 	 */
-	GoogleWorkspaceKnownNetworkMetric(String name) {
+	NetworkEnum(String name) {
 		this.name = name;
 	}
 
@@ -39,14 +39,14 @@ public enum GoogleWorkspaceKnownNetworkMetric {
 	}
 
 	/**
-	 * Returns the GoogleWorkspaceKnownNetworkMetric enum constant associated with the specified name.
+	 * Returns the NetworkEnum enum constant associated with the specified name.
 	 *
 	 * @param name the name of the known network metric
-	 * @return the GoogleWorkspaceKnownNetworkMetric enum constant with the specified name
+	 * @return the NetworkEnum enum constant with the specified name
 	 * @throws IllegalStateException if the specified name is not supported
 	 */
-	public static GoogleWorkspaceKnownNetworkMetric getByName(String name) {
-		Optional<GoogleWorkspaceKnownNetworkMetric> property = Arrays.stream(GoogleWorkspaceKnownNetworkMetric.values()).filter(group -> group.getName().equals(name)).findFirst();
+	public static NetworkEnum getByName(String name) {
+		Optional<NetworkEnum> property = Arrays.stream(NetworkEnum.values()).filter(group -> group.getName().equals(name)).findFirst();
 		if (property.isPresent()) {
 			return property.get();
 		} else {

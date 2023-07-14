@@ -62,4 +62,6 @@ public class GoogleWorkspaceConstant {
 	public static final String SECOND = " sec ";
 	public static final String MINUTE = " min ";
 	public static final String HOUR = " h ";
+	public static final int MAC_ADDRESS_LENGTH = 12;
+	public static final int DEFAULT_ORG_UNIT_POSITION = 0;
 }

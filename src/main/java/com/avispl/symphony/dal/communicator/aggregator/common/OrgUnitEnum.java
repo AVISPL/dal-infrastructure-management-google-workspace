@@ -7,13 +7,13 @@ package com.avispl.symphony.dal.communicator.aggregator.common;
 import com.avispl.symphony.dal.communicator.aggregator.dto.systemInfo.OrgUnit;
 
 /**
- * GoogleWorkspaceOrgUnitMetric include different metrics for Google Workspace organizational units.
+ * OrgUnitEnum include different metrics for Google Workspace organizational units.
  *
  * @author Harry / Symphony Dev Team<br>
  * Created on 6/19/2023
  * @since 1.0.0
  */
-public enum GoogleWorkspaceOrgUnitMetric {
+public enum OrgUnitEnum {
 	DESCRIPTION("Description"),
 	NAME("Name"),
 	ORG_UNIT_ID("UnitID"),
@@ -23,11 +23,11 @@ public enum GoogleWorkspaceOrgUnitMetric {
 	private final String name;
 
 	/**
-	 * Constructs a GoogleWorkspaceOrgUnitMetric enum constant with the specified name.
+	 * Constructs a OrgUnitEnum enum constant with the specified name.
 	 *
 	 * @param name the name of the organizational unit metric
 	 */
-	GoogleWorkspaceOrgUnitMetric(String name) {
+	OrgUnitEnum(String name) {
 		this.name = name;
 	}
 
@@ -47,7 +47,7 @@ public enum GoogleWorkspaceOrgUnitMetric {
 	 * @param metric the metric to retrieve the value for
 	 * @return the value of the specified metric from the OrgUnit object
 	 */
-	public static String getValueByProperty(OrgUnit orgUnit, GoogleWorkspaceOrgUnitMetric metric) {
+	public static String getValueByProperty(OrgUnit orgUnit, OrgUnitEnum metric) {
 		if (orgUnit == null) {
 			orgUnit = new OrgUnit();
 		}

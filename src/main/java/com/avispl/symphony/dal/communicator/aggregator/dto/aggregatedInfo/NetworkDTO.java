@@ -11,7 +11,7 @@ package com.avispl.symphony.dal.communicator.aggregator.dto.aggregatedInfo;
  * Created on 6/20/2023
  * @since 1.0.0
  */
-public class KnownNetwork {
+public class NetworkDTO {
 	private String ipAddress;
 	private String wanIpAddress;
 
