@@ -5,13 +5,13 @@
 package com.avispl.symphony.dal.communicator.aggregator.common;
 
 /**
- * GoogleWorkspaceAggregatedDeviceMetric include different aggregated device metrics for Google Workspace.
+ * AggregatedDeviceEnum include different aggregated device metrics for Google Workspace.
  *
  * @author Harry / Symphony Dev Team<br>
  * Created on 6/20/2023
  * @since 1.0.0
  */
-public enum GoogleWorkspaceAggregatedDeviceMetric {
+public enum AggregatedDeviceEnum {
 	STATUS("Status"),
 	SERIAL_NUMBER("SerialNumber"),
 	CPU_MODEL("CPUModel"),
@@ -44,7 +44,7 @@ public enum GoogleWorkspaceAggregatedDeviceMetric {
 	 *
 	 * @param name the name of the aggregated metric
 	 */
-	GoogleWorkspaceAggregatedDeviceMetric(String name) {
+	AggregatedDeviceEnum(String name) {
 		this.name = name;
 	}
 

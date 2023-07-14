@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -54,13 +55,13 @@ import com.avispl.symphony.dal.aggregator.parser.AggregatedDeviceProcessor;
 import com.avispl.symphony.dal.aggregator.parser.PropertiesMapping;
 import com.avispl.symphony.dal.aggregator.parser.PropertiesMappingParser;
 import com.avispl.symphony.dal.communicator.RestCommunicator;
-import com.avispl.symphony.dal.communicator.aggregator.common.GoogleCPUTemperatureMetric;
-import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceAggregatedDeviceMetric;
+import com.avispl.symphony.dal.communicator.aggregator.common.AggregatedDeviceEnum;
+import com.avispl.symphony.dal.communicator.aggregator.common.CPUTemperatureEnum;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceCommand;
 import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceConstant;
-import com.avispl.symphony.dal.communicator.aggregator.common.GoogleWorkspaceOrgUnitMetric;
+import com.avispl.symphony.dal.communicator.aggregator.common.OrgUnitEnum;
 import com.avispl.symphony.dal.communicator.aggregator.dto.aggregatedInfo.CPUTemperature;
-import com.avispl.symphony.dal.communicator.aggregator.dto.aggregatedInfo.KnownNetwork;
+import com.avispl.symphony.dal.communicator.aggregator.dto.aggregatedInfo.NetworkDTO;
 import com.avispl.symphony.dal.communicator.aggregator.dto.systemInfo.OrgUnit;
 import com.avispl.symphony.dal.communicator.aggregator.statistics.DynamicStatisticsDefinition;
 import com.avispl.symphony.dal.util.StringUtils;
@@ -69,7 +70,7 @@ import com.avispl.symphony.dal.util.StringUtils;
  * GoogleWorkspaceAggregatorDevice class provides during the monitoring and controlling process
  * Supported features are:
  * Monitoring Aggregator Device:
- <ul>
+ * <ul>
  * <li> - ChromeOSDevicesCount</li>
  * <li> - OrganizationalUnitsCount</li>
  * <li> - OrganizationalUnits#ChromeOSDevicesCount</li>
@@ -208,7 +209,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * ObjectMapper provides functionality for converting between Java objects and JSON.
 	 * It can be used to serialize objects to JSON format, and deserialize JSON data to objects.
 	 */
-	ObjectMapper objectMapper = new ObjectMapper();
+	private ObjectMapper objectMapper = new ObjectMapper();
 
 	/**
 	 * Indicates whether a device is considered as paused.
@@ -303,7 +304,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	/**
 	 * contains information of aggregated devices
 	 */
-	JsonNode aggregatedDeviceResponse;
+	private JsonNode aggregatedDeviceResponse;
 
 	/**
 	 * current orgUnit Name
@@ -353,15 +354,6 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 */
 	public void setCurrentOrgUnitName(String currentOrgUnitName) {
 		this.currentOrgUnitName = currentOrgUnitName;
-	}
-
-	/**
-	 * Retrieves {@link #reentrantLock}
-	 *
-	 * @return value of {@link #reentrantLock}
-	 */
-	public ReentrantLock getReentrantLock() {
-		return reentrantLock;
 	}
 
 	/**
@@ -459,13 +451,10 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 						return this.getPingTimeout();
 					}
 				} catch (SocketTimeoutException | ConnectException tex) {
-					if (this.logger.isDebugEnabled()) {
-						this.logger.error(String.format("PING TIMEOUT: Connection to %s did not succeed within the timeout period of %sms", host, this.getPingTimeout()));
-					}
-					throw new SocketTimeoutException("Connection timed out");
+					throw new RuntimeException("Socket connection timed out", tex);
 				} catch (Exception e) {
-					if (this.logger.isDebugEnabled()) {
-						this.logger.error(String.format("PING TIMEOUT: Connection to %s did not succeed, UNKNOWN ERROR %s: ", host, e.getMessage()));
+					if (this.logger.isWarnEnabled()) {
+						this.logger.warn(String.format("PING TIMEOUT: Connection to %s did not succeed, UNKNOWN ERROR %s: ", host, e.getMessage()));
 					}
 					return this.getPingTimeout();
 				}
@@ -721,9 +710,9 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		if (orgUnitCount != 0) {
 			OrgUnit orgUnit = getDefaultOrgUnit();
 			String orgUnitGroup = GoogleWorkspaceConstant.ORGANIZATIONAL_UNITS_GROUP;
-			for (GoogleWorkspaceOrgUnitMetric orgUnitMetric : GoogleWorkspaceOrgUnitMetric.values()) {
+			for (OrgUnitEnum orgUnitMetric : OrgUnitEnum.values()) {
 				String name = orgUnitMetric.getName();
-				String value = GoogleWorkspaceOrgUnitMetric.getValueByProperty(orgUnit, orgUnitMetric);
+				String value = OrgUnitEnum.getValueByProperty(orgUnit, orgUnitMetric);
 				String propertyName = orgUnitGroup + name;
 				switch (orgUnitMetric) {
 					case NAME:
@@ -774,10 +763,12 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 
 			for (JsonNode jsonNode : aggregatedDeviceResponse) {
 				String id = jsonNode.get(GoogleWorkspaceConstant.DEVICE_ID).asText();
-				JsonNode telemetryItem = getJsonNodeByDeviceId(telemetryResponse.get(GoogleWorkspaceConstant.DEVICES), id);
 				ObjectNode objectNode = (ObjectNode) jsonNode;
-				if (telemetryItem != null && telemetryItem.has(GoogleWorkspaceConstant.AUDIO_STATUS_REPORT)) {
-					objectNode.put(GoogleWorkspaceConstant.AUDIO_STATUS_REPORT, telemetryItem.get(GoogleWorkspaceConstant.AUDIO_STATUS_REPORT).get(0).get(GoogleWorkspaceConstant.OUTPUT_VOLUME).asText());
+				if (!telemetryResponse.isEmpty()) {
+					JsonNode telemetryItem = getJsonNodeByDeviceId(telemetryResponse.get(GoogleWorkspaceConstant.DEVICES), id);
+					if (telemetryItem != null && telemetryItem.has(GoogleWorkspaceConstant.AUDIO_STATUS_REPORT)) {
+						objectNode.put(GoogleWorkspaceConstant.AUDIO_STATUS_REPORT, telemetryItem.get(GoogleWorkspaceConstant.AUDIO_STATUS_REPORT).get(0).get(GoogleWorkspaceConstant.OUTPUT_VOLUME).asText());
+					}
 				}
 
 				JsonNode node = objectMapper.createArrayNode().add(objectNode);
@@ -825,7 +816,8 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				if (aggregatedDevice.getDeviceModel().contains(GoogleWorkspaceConstant.CHROMEBOOK)) {
 					aggregatedDevice.setDeviceModel(GoogleWorkspaceConstant.CHROMEBOOK);
 				}
-				if(!mappingStatistic.containsKey(GoogleWorkspaceConstant.VOLUME_LEVEL)){
+				aggregatedDevice.setDeviceOnline(true);
+				if (!mappingStatistic.containsKey(GoogleWorkspaceConstant.VOLUME_LEVEL)) {
 					aggregatedDevice.setDeviceOnline(false);
 				}
 				mapMonitoringProperty(mappingStatistic, stats);
@@ -848,9 +840,9 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	private void mapMonitoringProperty(Map<String, String> mappingStatistic, Map<String, String> stats) {
 		String value;
 		String name;
-		KnownNetwork knownNetwork;
+		NetworkDTO networkDTO;
 		JsonNode jsonNodeValue;
-		for (GoogleWorkspaceAggregatedDeviceMetric aggregatedDeviceMetric : GoogleWorkspaceAggregatedDeviceMetric.values()) {
+		for (AggregatedDeviceEnum aggregatedDeviceMetric : AggregatedDeviceEnum.values()) {
 			name = aggregatedDeviceMetric.getName();
 			value = getDefaultValueForNullData(mappingStatistic.get(name));
 			switch (aggregatedDeviceMetric) {
@@ -872,17 +864,17 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 					stats.put(name, convertByteToGB(value));
 					break;
 				case IP_ADDRESS:
-					knownNetwork = getKnowNetworkValue(value);
-					if (knownNetwork != null) {
-						stats.put(name, knownNetwork.getIpAddress());
+					networkDTO = getKnowNetworkValue(value);
+					if (networkDTO != null) {
+						stats.put(name, networkDTO.getIpAddress());
 					} else {
 						stats.put(name, GoogleWorkspaceConstant.NONE);
 					}
 					break;
 				case WAN_IP_ADDRESS:
-					knownNetwork = getKnowNetworkValue(value);
-					if (knownNetwork != null) {
-						stats.put(name, knownNetwork.getWanIpAddress());
+					networkDTO = getKnowNetworkValue(value);
+					if (networkDTO != null) {
+						stats.put(name, networkDTO.getWanIpAddress());
 					} else {
 						stats.put(name, GoogleWorkspaceConstant.NONE);
 					}
@@ -970,7 +962,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				List<CPUTemperature> cpuTemperatures = convertJsonNodeToList(lastObject, new TypeReference<List<CPUTemperature>>() {
 				});
 				if (!cpuTemperatures.isEmpty()) {
-					String label = GoogleCPUTemperatureMetric.getByName(name).getValue();
+					String label = CPUTemperatureEnum.getByName(name).getValue();
 					int temperature = cpuTemperatures.stream().filter(cpuTemperature -> cpuTemperature.getLabel().equals(label)).map(CPUTemperature::getTemperature).findFirst()
 							.orElse(0);
 
@@ -1000,12 +992,12 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * @param value The JSON string to be parsed.
 	 * @return The last KnownNetwork object in the parsed list, or null if an exception occurs during parsing or the list is empty.
 	 */
-	private KnownNetwork getKnowNetworkValue(String value) {
+	private NetworkDTO getKnowNetworkValue(String value) {
 		try {
-			List<KnownNetwork> knownNetworks = objectMapper.readValue(value, new TypeReference<List<KnownNetwork>>() {
+			List<NetworkDTO> networkDTOS = objectMapper.readValue(value, new TypeReference<List<NetworkDTO>>() {
 			});
-			if (!knownNetworks.isEmpty()) {
-				return knownNetworks.get(knownNetworks.size() - 1);
+			if (!networkDTOS.isEmpty()) {
+				return networkDTOS.get(networkDTOS.size() - 1);
 			}
 		} catch (Exception e) {
 			return null;
@@ -1022,11 +1014,11 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	private JsonNode getJsonNodeValue(String value) {
 		try {
 			JsonNode root = objectMapper.readTree(value);
-			if (root.isArray() && root.size() > 0) {
+			if (root != null && root.isArray() && root.size() > 0) {
 				return root;
 			}
 		} catch (Exception e) {
-			return null;
+			logger.error("Error occurred while parsing JSON", e);
 		}
 		return null;
 	}
@@ -1042,11 +1034,11 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	private <T> List<T> convertJsonNodeToList(JsonNode jsonNode, TypeReference<List<T>> typeReference) {
 		List<T> listValue = new ArrayList<>();
 		try {
-			listValue = objectMapper.readValue(jsonNode.toString(), typeReference);
+			return objectMapper.readValue(jsonNode.toString(), typeReference);
 		} catch (Exception e) {
+			logger.error("Error when convert json node to list", e);
 			return listValue;
 		}
-		return listValue;
 	}
 
 	/**
@@ -1057,12 +1049,10 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * @return the JsonNode object with the matching device ID, or null if not found
 	 */
 	private JsonNode getJsonNodeByDeviceId(JsonNode jsonNode, String id) {
-		for (JsonNode item : jsonNode) {
-			if (item.has(GoogleWorkspaceConstant.DEVICE_ID) && id.equals(item.get(GoogleWorkspaceConstant.DEVICE_ID).asText())) {
-				return item;
-			}
-		}
-		return null;
+		return StreamSupport.stream(jsonNode.spliterator(), false)
+				.filter(item -> item.has(GoogleWorkspaceConstant.DEVICE_ID) && id.equals(item.get(GoogleWorkspaceConstant.DEVICE_ID).asText()))
+				.findFirst()
+				.orElse(null);
 	}
 
 	/**
@@ -1080,7 +1070,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		if (StringUtils.isNotNullOrEmpty(currentOrgUnitName)) {
 			return currentOrgUnitName;
 		}
-		return orgUnitList.get(4).getName();
+		return orgUnitList.get(GoogleWorkspaceConstant.DEFAULT_ORG_UNIT_POSITION).getName();
 	}
 
 	/**
@@ -1098,12 +1088,10 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * @return the count of matching organizational units
 	 */
 	private long checkFilterOrgUnit() {
-		if (StringUtils.isNullOrEmpty(filterOrgUnit)) {
-			return orgUnitList.size();
-		}
-		return orgUnitList.stream()
-				.filter(orgUnit -> orgUnit.getName().equals(filterOrgUnit))
-				.count();
+		return StringUtils.isNullOrEmpty(filterOrgUnit) ? orgUnitList.size() :
+				orgUnitList.stream()
+						.filter(orgUnit -> orgUnit.getName().equals(filterOrgUnit))
+						.count();
 	}
 
 	/**
@@ -1129,7 +1117,9 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			params.put(GoogleWorkspaceConstant.GRANT_TYPE, GoogleWorkspaceConstant.REFRESH_TOKEN);
 			try {
 				JsonNode response = doPost(GoogleWorkspaceConstant.OAUTH2_URL, params, JsonNode.class);
-				token = response.get(GoogleWorkspaceConstant.ACCESS_TOKEN).asText();
+				if (response != null && response.has(GoogleWorkspaceConstant.ACCESS_TOKEN)) {
+					token = response.get(GoogleWorkspaceConstant.ACCESS_TOKEN).asText();
+				}
 			} catch (Exception e) {
 				throw new ResourceNotReachableException("Can't get token from client id and client secret", e);
 			}
@@ -1173,7 +1163,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			outputFormatter.setTimeZone(TimeZone.getTimeZone(GoogleWorkspaceConstant.UTC));
 			outputDateTime = outputFormatter.format(date);
 		} catch (Exception e) {
-			logger.debug("Error when convert format datetime");
+			logger.debug("Error when convert format datetime", e);
 		}
 		return outputDateTime;
 	}
@@ -1194,7 +1184,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			SimpleDateFormat dateFormat = new SimpleDateFormat("MMM yyyy");
 			return dateFormat.format(date);
 		} catch (Exception e) {
-			logger.debug("Error when convert milliseconds to datetime");
+			logger.debug("Error when convert milliseconds to datetime", e);
 		}
 		return GoogleWorkspaceConstant.NONE;
 	}
@@ -1206,8 +1196,8 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * @return the formatted MAC address string, or the original input if it is "none" or has an invalid length
 	 */
 	private String formatMacAddress(String input) {
-		if (GoogleWorkspaceConstant.NONE.equals(input) || input.length() != 12) {
-			return input;
+		if (GoogleWorkspaceConstant.NONE.equals(input) || input.length() != GoogleWorkspaceConstant.MAC_ADDRESS_LENGTH) {
+			return GoogleWorkspaceConstant.NONE;
 		}
 		StringBuilder formattedMacAddress = new StringBuilder();
 		for (int i = 0; i < input.length(); i += 2) {
@@ -1235,7 +1225,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			gb = Math.round(gb * 100.0) / 100.0;
 			return String.valueOf(gb);
 		} catch (Exception e) {
-			logger.debug("Error when convert byte to GB");
+			logger.debug("Error when convert byte to GB", e);
 		}
 		return GoogleWorkspaceConstant.NONE;
 	}
@@ -1266,7 +1256,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				}
 			}
 		} catch (Exception e) {
-			logger.debug("Error when convert byte to GB");
+			logger.debug("Error when convert byte to GB", e);
 		}
 		return GoogleWorkspaceConstant.NONE;
 	}
@@ -1288,7 +1278,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			Date date = inputDateFormat.parse(inputDate);
 			return outputDateFormat.format(date);
 		} catch (Exception e) {
-			logger.debug("Error when convert format datetime");
+			logger.debug("Error when convert format datetime", e);
 		}
 
 		return GoogleWorkspaceConstant.NONE;

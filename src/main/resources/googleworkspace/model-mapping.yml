@@ -7,7 +7,6 @@ models:
         deviceId: get("deviceId")
         deviceName: get("serialNumber")
         deviceModel: get("model")
-        deviceOnline: get("status").asText().equals("ACTIVE") == true
       properties:
         Status: get("status")
         SerialNumber: get("serialNumber")
