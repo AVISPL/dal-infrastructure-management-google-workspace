@@ -31,7 +31,7 @@ public class GoogleWorkspaceCommunicatorTest {
 		googleWorkspaceCommunicator = new GoogleWorkspaceCommunicator();
 		googleWorkspaceCommunicator.setHost("admin.googleapis.com");
 		googleWorkspaceCommunicator.setLogin("***REMOVED***");
-		googleWorkspaceCommunicator.setPassword("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 1//04tDvzCfQx9IQCgYIARAAGAQSNwF-L9Ir-JA7TJ3U2D04WcmmyseCQWF6BRa60-vg_uqDkUk_k_wk9MTcTVmzC0zXKlyrpaeNf6Q");
+		googleWorkspaceCommunicator.setPassword("***REMOVED***");
 		googleWorkspaceCommunicator.setPort(443);
 		googleWorkspaceCommunicator.init();
 		googleWorkspaceCommunicator.connect();
