@@ -30,8 +30,8 @@ public class GoogleWorkspaceCommunicatorTest {
 	void setUp() throws Exception {
 		googleWorkspaceCommunicator = new GoogleWorkspaceCommunicator();
 		googleWorkspaceCommunicator.setHost("admin.googleapis.com");
-		googleWorkspaceCommunicator.setLogin("***REMOVED***");
-		googleWorkspaceCommunicator.setPassword("***REMOVED***");
+		googleWorkspaceCommunicator.setLogin("");
+		googleWorkspaceCommunicator.setPassword("");
 		googleWorkspaceCommunicator.setPort(443);
 		googleWorkspaceCommunicator.init();
 		googleWorkspaceCommunicator.connect();
@@ -87,8 +87,7 @@ public class GoogleWorkspaceCommunicatorTest {
 	 */
 	@Test
 	void testGetAggregatorDataAndFailedFiltering() throws Exception {
-		googleWorkspaceCommunicator.setFilterOrgUnit("AVI-SPL Labs");
-		googleWorkspaceCommunicator.setFilterSerialNumber("AAAA");
+		googleWorkspaceCommunicator.setFilterOrgUnit("AVI");
 		extendedStatistic = (ExtendedStatistics) googleWorkspaceCommunicator.getMultipleStatistics().get(0);
 		Map<String, String> statistics = extendedStatistic.getStatistics();
 		List<AdvancedControllableProperty> advancedControllablePropertyList = extendedStatistic.getControllableProperties();
