@@ -37,10 +37,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import com.avispl.symphony.api.dal.control.Controller;
 import com.avispl.symphony.api.dal.dto.control.AdvancedControllableProperty;
@@ -255,11 +251,6 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * An instance of the AggregatedDeviceProcessor class used to process and aggregate device-related data.
 	 */
 	private AggregatedDeviceProcessor aggregatedDeviceProcessor;
-
-	/**
-	 * SSL certificate
-	 */
-	private SSLContext sslContext;
 
 	/**
 	 * Google Workspace API Token
@@ -577,24 +568,6 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		}
 		executorService = Executors.newFixedThreadPool(1);
 		executorService.submit(deviceDataLoader = new GoogleWorkspaceDataLoader());
-
-		// Create a trust manager that trusts all certificates
-		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-				return new java.security.cert.X509Certificate[] {};
-			}
-
-			public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-			}
-
-			public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-			}
-		} };
-
-		// Install the all-trusting trust manager
-		this.sslContext = SSLContext.getInstance(GoogleWorkspaceConstant.SSL);
-		this.sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-		HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
 		super.internalInit();
 	}
 

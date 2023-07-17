@@ -31,7 +31,7 @@ public class GoogleWorkspaceCommunicatorTest {
 		googleWorkspaceCommunicator = new GoogleWorkspaceCommunicator();
 		googleWorkspaceCommunicator.setHost("admin.googleapis.com");
 		googleWorkspaceCommunicator.setLogin("545349949069-farknvef09u019dpauvvp6qp04haia3f.apps.googleusercontent.com");
-		googleWorkspaceCommunicator.setPassword("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 1//04tDvzCfQx9IQCgYIARAAGAQSNwF-L9Ir-JA7TJ3U2D04WcmmyseCQWF6BRa60-vg_uqDkUk_k_wk9MTcTVmzC0zXKlyrpaeNf6Q");
+		googleWorkspaceCommunicator.setPassword("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 1//04-XNCA9te34LCgYIARAAGAQSNwF-L9IrOp13BGsb09mDbsVOE5sR0mzhgjaj4jQj8sDA6sC1fw-M-hLGqxKlCwXiE6BD573PXMQ");
 		googleWorkspaceCommunicator.setPort(443);
 		googleWorkspaceCommunicator.init();
 		googleWorkspaceCommunicator.connect();
