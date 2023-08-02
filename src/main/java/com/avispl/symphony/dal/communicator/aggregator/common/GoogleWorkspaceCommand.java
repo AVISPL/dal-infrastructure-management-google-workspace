@@ -14,7 +14,7 @@ package com.avispl.symphony.dal.communicator.aggregator.common;
 public class GoogleWorkspaceCommand {
 	public static final String USER_COMMAND = "/admin/directory/v1/users?domain=&maxResults=5";
 	public static final String ORG_UNIT_COMMAND = "/admin/directory/v1/customer/{CustomerId}/orgunits";
-	public static final String CHROME_OS_COMMAND = "/admin/directory/v1/customer/{CustomerId}/devices/chromeos?maxResults=500&orgUnitPath={orgUnit}&query={serialNumber}";
+	public static final String CHROME_OS_COMMAND = "/admin/directory/v1/customer/{CustomerId}/devices/chromeos?maxResults=400&orgUnitPath={orgUnit}&query={serialNumber}";
 	public static final String PARENT_ORG_UNIT_COMMAND = "/admin/directory/v1/customer/{CustomerId}/orgunits/";
-	public static final String TELEMETRY_COMMAND = "https://chromemanagement.googleapis.com/v1/customers/{CustomerId}/telemetry/devices?pageSize=500&readMask=deviceId,audioStatusReport";
+	public static final String TELEMETRY_COMMAND = "https://chromemanagement.googleapis.com/v1/customers/{CustomerId}/telemetry/devices?pageSize=400&readMask=deviceId,audioStatusReport";
 }

@@ -17,7 +17,7 @@ import com.avispl.symphony.api.dal.dto.monitor.aggregator.AggregatedDevice;
 /**
  * GoogleWorkspaceCommunicator
  *
- * @author Kevin / Symphony Dev Team<br>
+ * @author Harry / Symphony Dev Team<br>
  * Created on 6/19/2023
  * @since 1.0.0
  */
@@ -67,8 +67,8 @@ public class GoogleWorkspaceCommunicatorTest {
 	 */
 	@Test
 	void testGetAggregatorDataAndFiltering() throws Exception {
-		googleWorkspaceCommunicator.setFilterOrgUnit("AVI-SPL Labs");
-		googleWorkspaceCommunicator.setFilterSerialNumber("48JR9FCNB03207P");
+		googleWorkspaceCommunicator.setFilterOrgUnit("AVI-SPL");
+		googleWorkspaceCommunicator.setFilterSerialNumber("R9F");
 		extendedStatistic = (ExtendedStatistics) googleWorkspaceCommunicator.getMultipleStatistics().get(0);
 		Map<String, String> statistics = extendedStatistic.getStatistics();
 		List<AdvancedControllableProperty> advancedControllablePropertyList = extendedStatistic.getControllableProperties();
@@ -106,15 +106,14 @@ public class GoogleWorkspaceCommunicatorTest {
 	 */
 	@Test
 	void testGetMultipleStatistics() throws Exception {
-		googleWorkspaceCommunicator.setCurrentOrgUnitName("");
 		googleWorkspaceCommunicator.setFilterOrgUnit("");
 		googleWorkspaceCommunicator.setFilterSerialNumber("");
 		googleWorkspaceCommunicator.getMultipleStatistics();
 		googleWorkspaceCommunicator.retrieveMultipleStatistics();
 		Thread.sleep(30000);
 		List<AggregatedDevice> aggregatedDeviceList = googleWorkspaceCommunicator.retrieveMultipleStatistics();
-		Assert.assertEquals(1, aggregatedDeviceList.size());
-		Assert.assertEquals(27, aggregatedDeviceList.get(0).getProperties().size());
+		Assert.assertEquals(2, aggregatedDeviceList.size());
+		Assert.assertEquals(26, aggregatedDeviceList.get(1).getProperties().size());
 	}
 
 	/**
@@ -134,7 +133,7 @@ public class GoogleWorkspaceCommunicatorTest {
 		Thread.sleep(30000);
 		List<AggregatedDevice> aggregatedDeviceList = googleWorkspaceCommunicator.retrieveMultipleStatistics();
 		Assert.assertEquals(1, aggregatedDeviceList.size());
-		Assert.assertEquals(23, aggregatedDeviceList.get(0).getProperties().size());
+		Assert.assertEquals(22, aggregatedDeviceList.get(0).getProperties().size());
 		Assert.assertEquals(4, aggregatedDeviceList.get(0).getDynamicStatistics().size());
 	}
 

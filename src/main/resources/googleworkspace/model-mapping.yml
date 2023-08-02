@@ -6,12 +6,12 @@ models:
       mapping:
         deviceId: get("deviceId")
         deviceName: get("serialNumber")
+        deviceOnline: get("status").asText().equals("ACTIVE")
         deviceModel: get("model")
       properties:
         Status: get("status")
         SerialNumber: get("serialNumber")
-        CPUModel: get("cpuInfo")?.get(0).get("model")
-        Architecture: get("cpuInfo")?.get(0).get("architecture")
+        CPUModel: get("cpuInfo")?.get(0)?.get("model")
         MACAddress: get("macAddress")
         ChromeOSVersion: get("osVersion")
         PlatformVersion: get("platformVersion")
