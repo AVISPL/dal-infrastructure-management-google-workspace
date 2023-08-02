@@ -22,6 +22,7 @@ public class GoogleWorkspaceConstant {
 	public static final String ORG_UNIT_PATH = "orgUnitPath";
 	public static final String DEVICE_ID = "deviceId";
 	public static final String DEVICES = "devices";
+	public static final String LAST_SYNC = "LastSync";
 	public static final String CPU_TEMPERATURE_INFO = "cpuTemperatureInfo";
 	public static final String SYSTEM_RAM_FREE_INFO = "systemRamFreeInfo";
 	public static final String CPU_UTILIZATION_PERCENTAGE_INFO = "cpuUtilizationPercentageInfo";
@@ -64,4 +65,7 @@ public class GoogleWorkspaceConstant {
 	public static final String HOUR = " h ";
 	public static final int MAC_ADDRESS_LENGTH = 12;
 	public static final int DEFAULT_ORG_UNIT_POSITION = 0;
+	public static final int MIN_VOLUME_LEVEL = 0;
+	public static final String REGEX_SERIAL_NUMBER = "^[a-zA-Z0-9]+$";
+	public static final String CPU_TEMPERATURE = "Core1(C)";
 }

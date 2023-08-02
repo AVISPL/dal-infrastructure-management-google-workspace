@@ -67,4 +67,19 @@ public enum CPUTemperatureEnum {
 			throw new IllegalStateException(String.format("control group %s is not supported.", name));
 		}
 	}
+
+	/**
+	 * Finds the name associated with a specific value in the CPUTemperatureEnum.
+	 *
+	 * @param value The value to search for.
+	 * @return The name corresponding to the provided value, or null if no match is found.
+	 */
+	public static String findNameByValue(String value) {
+		CPUTemperatureEnum matchedEnum = Arrays.stream(CPUTemperatureEnum.values())
+				.filter(definition -> definition.getValue().equals(value))
+				.findFirst()
+				.orElse(null);
+
+		return matchedEnum != null ? matchedEnum.getName() : null;
+	}
 }
