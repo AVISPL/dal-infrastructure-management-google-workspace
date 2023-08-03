@@ -428,7 +428,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * ping latency information to Symphony
 	 */
 	@Override
-	public int ping() {
+	public int ping() throws Exception {
 		if (isInitialized()) {
 			long pingResultTotal = 0L;
 
@@ -468,7 +468,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<Statistics> getMultipleStatistics() {
+	public List<Statistics> getMultipleStatistics() throws Exception {
 		reentrantLock.lock();
 		try {
 			if (!checkValidApiToken()) {
@@ -497,7 +497,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void controlProperty(ControllableProperty controllableProperty) {
+	public void controlProperty(ControllableProperty controllableProperty) throws Exception {
 		reentrantLock.lock();
 		try {
 			String value = String.valueOf(controllableProperty.getValue());
@@ -518,7 +518,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void controlProperties(List<ControllableProperty> controllableProperties) {
+	public void controlProperties(List<ControllableProperty> controllableProperties) throws Exception {
 		if (CollectionUtils.isEmpty(controllableProperties)) {
 			throw new IllegalArgumentException("ControllableProperties can not be null or empty");
 		}
@@ -535,7 +535,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<AggregatedDevice> retrieveMultipleStatistics() {
+	public List<AggregatedDevice> retrieveMultipleStatistics() throws Exception {
 		if (!orgUnitList.isEmpty()) {
 			if (checkValidApiToken()) {
 				if (executorService == null) {
@@ -557,7 +557,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<AggregatedDevice> retrieveMultipleStatistics(List<String> list) {
+	public List<AggregatedDevice> retrieveMultipleStatistics(List<String> list) throws Exception {
 		return retrieveMultipleStatistics().stream().filter(aggregatedDevice -> list.contains(aggregatedDevice.getDeviceId())).collect(Collectors.toList());
 	}
 
@@ -649,6 +649,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			if (StringUtils.isNotNullOrEmpty(filterSerialNumber)) {
 				filterSerialNumber = filterSerialNumber.trim();
 			}
+			aggregatedDeviceResponse = objectMapper.createObjectNode();
 			if (checkSerialNumberFormat(filterSerialNumber)) {
 				String chromeOSCommand = GoogleWorkspaceCommand.CHROME_OS_COMMAND.replace(GoogleWorkspaceConstant.PATH_VARIABLE_CUSTOMER_ID, customerId)
 						.replace(GoogleWorkspaceConstant.PATH_VARIABLE_ORG_UNIT, getDefaultFilterValueForNullData(filterOrgUnit))
@@ -665,11 +666,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 					if (chromeOSResponse.has(GoogleWorkspaceConstant.NEXT_TOKEN)) {
 						nextTokenChromeOS = chromeOSResponse.get(GoogleWorkspaceConstant.NEXT_TOKEN).asText();
 					}
-				} else {
-					aggregatedDeviceResponse = objectMapper.createObjectNode();
 				}
-			} else {
-				aggregatedDeviceResponse = objectMapper.createObjectNode();
 			}
 		} catch (Exception e) {
 			aggregatedDeviceResponse = objectMapper.createObjectNode();
@@ -1129,11 +1126,11 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		long deviceCount = aggregatedDeviceResponse.size();
 		if (StringUtils.isNullOrEmpty(filterOrgUnit) && StringUtils.isNullOrEmpty(filterSerialNumber)) {
 			return orgUnitList.size();
-		} else if (StringUtils.isNotNullOrEmpty(filterOrgUnit) && StringUtils.isNullOrEmpty(filterSerialNumber)) {
-			return orgUnitCount;
-		} else {
-			return deviceCount;
 		}
+		if (StringUtils.isNotNullOrEmpty(filterOrgUnit) && StringUtils.isNullOrEmpty(filterSerialNumber)) {
+			return orgUnitCount;
+		}
+		return deviceCount;
 	}
 
 	/**
