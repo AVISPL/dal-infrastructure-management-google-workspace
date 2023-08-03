@@ -67,8 +67,8 @@ public class GoogleWorkspaceCommunicatorTest {
 	 */
 	@Test
 	void testGetAggregatorDataAndFiltering() throws Exception {
-		googleWorkspaceCommunicator.setFilterOrgUnit("AVI-SPL");
-		googleWorkspaceCommunicator.setFilterSerialNumber("R9F");
+		googleWorkspaceCommunicator.setFilterOrgUnit("Digital Signage Lab");
+		googleWorkspaceCommunicator.setFilterSerialNumber("");
 		extendedStatistic = (ExtendedStatistics) googleWorkspaceCommunicator.getMultipleStatistics().get(0);
 		Map<String, String> statistics = extendedStatistic.getStatistics();
 		List<AdvancedControllableProperty> advancedControllablePropertyList = extendedStatistic.getControllableProperties();

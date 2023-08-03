@@ -5,7 +5,6 @@
 package com.avispl.symphony.dal.communicator.aggregator.common;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 /**
  * CPUTemperatureEnum include different CPU temperature metrics for Google devices.
@@ -50,22 +49,6 @@ public enum CPUTemperatureEnum {
 	 */
 	public String getValue() {
 		return value;
-	}
-
-	/**
-	 * Returns the CPUTemperatureEnum enum constant associated with the specified name.
-	 *
-	 * @param name the name of the temperature metric
-	 * @return the CPUTemperatureEnum enum constant with the specified name
-	 * @throws IllegalStateException if the specified name is not supported
-	 */
-	public static CPUTemperatureEnum getByName(String name) {
-		Optional<CPUTemperatureEnum> property = Arrays.stream(CPUTemperatureEnum.values()).filter(group -> group.getName().equals(name)).findFirst();
-		if (property.isPresent()) {
-			return property.get();
-		} else {
-			throw new IllegalStateException(String.format("control group %s is not supported.", name));
-		}
 	}
 
 	/**
