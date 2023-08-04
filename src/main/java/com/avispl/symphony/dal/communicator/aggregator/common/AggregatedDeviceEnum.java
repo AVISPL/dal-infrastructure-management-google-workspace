@@ -15,7 +15,6 @@ public enum AggregatedDeviceEnum {
 	STATUS("Status"),
 	SERIAL_NUMBER("SerialNumber"),
 	CPU_MODEL("CPUModel"),
-	ARCHITECTURE("Architecture"),
 	MAC_ADDRESS("MACAddress"),
 	CHROME_OS_VERSION("ChromeOSVersion"),
 	PLATFORM_VERSION("PlatformVersion"),
