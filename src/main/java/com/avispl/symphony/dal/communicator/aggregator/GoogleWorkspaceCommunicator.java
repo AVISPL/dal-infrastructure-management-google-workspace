@@ -958,7 +958,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		String propertyName;
 		JsonNode jsonNodeValue = getJsonNodeValue(value);
 
-		if (jsonNodeValue != null) {
+		if (jsonNodeValue != null && jsonNodeValue.isArray() && jsonNodeValue.size() > 0) {
 			JsonNode lastObject = jsonNodeValue.get(jsonNodeValue.size() - 1).get(GoogleWorkspaceConstant.CPU_TEMPERATURE_INFO);
 			List<CPUTemperature> cpuTemperatures = convertJsonNodeToList(lastObject, new TypeReference<List<CPUTemperature>>() {
 			});
@@ -1097,7 +1097,10 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			if (StringUtils.isNotNullOrEmpty(currentOrgUnitName)) {
 				return currentOrgUnitName;
 			}
-			return aggregatedDeviceResponse.get(GoogleWorkspaceConstant.DEFAULT_ORG_UNIT_POSITION).get(GoogleWorkspaceConstant.ORG_UNIT_PATH).asText().substring(1);
+			if (aggregatedDeviceResponse.get(GoogleWorkspaceConstant.DEFAULT_ORG_UNIT_POSITION).has(GoogleWorkspaceConstant.ORG_UNIT_PATH)) {
+				return aggregatedDeviceResponse.get(GoogleWorkspaceConstant.DEFAULT_ORG_UNIT_POSITION).get(GoogleWorkspaceConstant.ORG_UNIT_PATH).asText().substring(1);
+			}
+			return GoogleWorkspaceConstant.NONE;
 		}
 		if (StringUtils.isNotNullOrEmpty(currentOrgUnitName)) {
 			return currentOrgUnitName;

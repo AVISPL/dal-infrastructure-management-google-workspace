@@ -67,5 +67,5 @@ public class GoogleWorkspaceConstant {
 	public static final int DEFAULT_ORG_UNIT_POSITION = 0;
 	public static final int MIN_VOLUME_LEVEL = 0;
 	public static final String REGEX_SERIAL_NUMBER = "^[a-zA-Z0-9]+$";
-	public static final String CPU_TEMPERATURE = "Core1(C)";
+	public static final String CPU_TEMPERATURE = "CPU_Temperature";
 }
