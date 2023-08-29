@@ -112,8 +112,8 @@ public class GoogleWorkspaceCommunicatorTest {
 		googleWorkspaceCommunicator.retrieveMultipleStatistics();
 		Thread.sleep(30000);
 		List<AggregatedDevice> aggregatedDeviceList = googleWorkspaceCommunicator.retrieveMultipleStatistics();
-		Assert.assertEquals(2, aggregatedDeviceList.size());
-		Assert.assertEquals(26, aggregatedDeviceList.get(1).getProperties().size());
+		Assert.assertEquals(3, aggregatedDeviceList.size());
+		Assert.assertEquals(28, aggregatedDeviceList.get(1).getProperties().size());
 	}
 
 	/**
@@ -154,7 +154,7 @@ public class GoogleWorkspaceCommunicatorTest {
 		List<AdvancedControllableProperty> advancedControllablePropertyList = extendedStatistic.getControllableProperties();
 
 		String property = "OrganizationalUnits#Name";
-		String value = "MOTF";
+		String value = "avispl.com";
 		ControllableProperty controllableProperty = new ControllableProperty();
 		controllableProperty.setProperty(property);
 		controllableProperty.setValue(value);
