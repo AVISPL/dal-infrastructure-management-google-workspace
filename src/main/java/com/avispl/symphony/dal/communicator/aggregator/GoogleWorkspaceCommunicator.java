@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -299,6 +300,11 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * List of orgUnit
 	 */
 	private List<OrgUnit> orgUnitList = Collections.synchronizedList(new ArrayList<>());
+
+	/**
+	 * Parent OrgUnit
+	 */
+	private String parentOrgUnit;
 
 	/**
 	 * contains information of aggregated devices
@@ -642,7 +648,17 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			orgUnitList.clear();
 			orgUnitList = objectMapper.readValue(orgUnitsResponse.get(GoogleWorkspaceConstant.ORGANIZATION_UNIT).toString(), new TypeReference<List<OrgUnit>>() {
 			});
+			Collections.sort(orgUnitList, Comparator.comparing(OrgUnit::getName));
 
+			JsonNode parentOrgUnitResponse = this.doGet(
+					GoogleWorkspaceCommand.PARENT_ORG_UNIT_COMMAND.replace(GoogleWorkspaceConstant.PATH_VARIABLE_CUSTOMER_ID, customerId) + orgUnitList.get(0).getParentOrgUnitId(), JsonNode.class);
+			if (parentOrgUnitResponse != null && parentOrgUnitResponse.has(GoogleWorkspaceConstant.NAME)) {
+				parentOrgUnit = parentOrgUnitResponse.get(GoogleWorkspaceConstant.NAME).asText();
+				orgUnitList.add(0, new OrgUnit(parentOrgUnitResponse.get(GoogleWorkspaceConstant.KIND).asText(), parentOrgUnitResponse.get(GoogleWorkspaceConstant.E_TAG).asText(),
+						parentOrgUnitResponse.get(GoogleWorkspaceConstant.NAME).asText(),
+						parentOrgUnitResponse.get(GoogleWorkspaceConstant.DESCRIPTION).asText(), parentOrgUnitResponse.get(GoogleWorkspaceConstant.ORG_UNIT_PATH).asText(),
+						parentOrgUnitResponse.get(GoogleWorkspaceConstant.ORG_UNIT_ID).asText(), GoogleWorkspaceConstant.NONE, GoogleWorkspaceConstant.NONE));
+			}
 			if (StringUtils.isNotNullOrEmpty(filterOrgUnit)) {
 				filterOrgUnit = filterOrgUnit.trim();
 			}
@@ -652,7 +668,8 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 			aggregatedDeviceResponse = objectMapper.createObjectNode();
 			if (checkSerialNumberFormat(filterSerialNumber)) {
 				String chromeOSCommand = GoogleWorkspaceCommand.CHROME_OS_COMMAND.replace(GoogleWorkspaceConstant.PATH_VARIABLE_CUSTOMER_ID, customerId)
-						.replace(GoogleWorkspaceConstant.PATH_VARIABLE_ORG_UNIT, getDefaultFilterValueForNullData(filterOrgUnit))
+						.replace(GoogleWorkspaceConstant.PATH_VARIABLE_ORG_UNIT,
+								StringUtils.isNotNullOrEmpty(filterOrgUnit) && filterOrgUnit.equals(parentOrgUnit) ? GoogleWorkspaceConstant.SLASH : getDefaultFilterValueForNullData(filterOrgUnit))
 						.replace(GoogleWorkspaceConstant.PATH_VARIABLE_SERIAL_NUMBER, getDefaultFilterValueForNullData(filterSerialNumber));
 
 				if (StringUtils.isNotNullOrEmpty(nextTokenChromeOS)) {
@@ -754,6 +771,9 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				nextTokenTelemetry = telemetryResponse.get(GoogleWorkspaceConstant.NEXT_TOKEN).asText();
 			}
 
+			if (StringUtils.isNotNullOrEmpty(filterOrgUnit) || StringUtils.isNotNullOrEmpty(filterSerialNumber)) {
+				aggregatedDeviceList.clear();
+			}
 			for (JsonNode jsonNode : aggregatedDeviceResponse) {
 				String id = jsonNode.get(GoogleWorkspaceConstant.DEVICE_ID).asText();
 				ObjectNode objectNode = (ObjectNode) jsonNode;
@@ -787,6 +807,9 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * @return the name of the parent organizational unit, or "none" if an error occurs or the name is not found
 	 */
 	private String getParentOrgUnitNameById(String id) {
+		if (GoogleWorkspaceConstant.NONE.equals(id)) {
+			return GoogleWorkspaceConstant.NONE;
+		}
 		try {
 			JsonNode parentOrgUnitResponse = this.doGet(GoogleWorkspaceCommand.PARENT_ORG_UNIT_COMMAND.replace(GoogleWorkspaceConstant.PATH_VARIABLE_CUSTOMER_ID, customerId) + id, JsonNode.class);
 			if (parentOrgUnitResponse.has(GoogleWorkspaceConstant.NAME)) {
@@ -865,6 +888,8 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				case ORG_UNIT:
 					if (GoogleWorkspaceConstant.NONE.equals(value)) {
 						stats.put(name, value);
+					} else if (GoogleWorkspaceConstant.SLASH.equals(value)) {
+						stats.put(name, parentOrgUnit);
 					} else {
 						stats.put(name, value.substring(1));
 					}
@@ -1092,13 +1117,17 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		}
 		if (StringUtils.isNotNullOrEmpty(filterSerialNumber) && aggregatedDeviceResponse.size() > 0) {
 			for (JsonNode item : aggregatedDeviceResponse) {
-				orgUnitNameList.add(item.get(GoogleWorkspaceConstant.ORG_UNIT_PATH).asText().substring(1));
+				if (item.get(GoogleWorkspaceConstant.ORG_UNIT_PATH).asText().length() == 1) {
+					orgUnitNameList.add(parentOrgUnit);
+				} else {
+					orgUnitNameList.add(item.get(GoogleWorkspaceConstant.ORG_UNIT_PATH).asText().substring(1));
+				}
 			}
 			if (StringUtils.isNotNullOrEmpty(currentOrgUnitName)) {
 				return currentOrgUnitName;
 			}
-			if (aggregatedDeviceResponse.get(GoogleWorkspaceConstant.DEFAULT_ORG_UNIT_POSITION).has(GoogleWorkspaceConstant.ORG_UNIT_PATH)) {
-				return aggregatedDeviceResponse.get(GoogleWorkspaceConstant.DEFAULT_ORG_UNIT_POSITION).get(GoogleWorkspaceConstant.ORG_UNIT_PATH).asText().substring(1);
+			if (!orgUnitNameList.isEmpty()) {
+				return orgUnitNameList.get(GoogleWorkspaceConstant.DEFAULT_ORG_UNIT_POSITION);
 			}
 			return GoogleWorkspaceConstant.NONE;
 		}
@@ -1147,7 +1176,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		if (credentials.length == 2) {
 			String clientSecret = credentials[0].trim();
 			String refreshToken = credentials[1].trim();
-			if (credentials[0].contains(GoogleWorkspaceConstant.SLASH)) {
+			if (credentials[0].contains(GoogleWorkspaceConstant.DOUBLE_SLASH)) {
 				refreshToken = credentials[0].trim();
 				clientSecret = credentials[1].trim();
 			}
