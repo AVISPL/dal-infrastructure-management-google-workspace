@@ -16,6 +16,10 @@ public class GoogleWorkspaceConstant {
 	public static final String EMPTY = "";
 	public static final String USERS = "users";
 	public static final String NAME = "name";
+	public static final String KIND = "kind";
+	public static final String E_TAG = "etag";
+	public static final String DESCRIPTION = "description";
+	public static final String ORG_UNIT_ID = "orgUnitId";
 	public static final String CUSTOMER_ID = "customerId";
 	public static final String ORGANIZATION_UNIT = "organizationUnits";
 	public static final String CHROME_OS_DEVICE = "chromeosdevices";
@@ -58,7 +62,8 @@ public class GoogleWorkspaceConstant {
 	public static final String COLON = ":";
 	public static final String COMMA = ",";
 	public static final String HASH = "#";
-	public static final String SLASH = "//";
+	public static final String DOUBLE_SLASH = "//";
+	public static final String SLASH = "/";
 	public static final String SPACE = " ";
 	public static final String SECOND = " sec ";
 	public static final String MINUTE = " min ";

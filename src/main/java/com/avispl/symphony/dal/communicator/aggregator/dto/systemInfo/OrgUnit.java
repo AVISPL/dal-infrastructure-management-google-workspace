@@ -25,6 +25,35 @@ public class OrgUnit {
 	private String parentOrgUnitId;
 
 	/**
+	 * Constructs an OrgUnit object with the provided parameters.
+	 *
+	 * @param kind The kind of the organization unit.
+	 * @param eTag The entity tag associated with the organization unit.
+	 * @param name The name of the organization unit.
+	 * @param description The description of the organization unit.
+	 * @param orgUnitPath The path of the organization unit.
+	 * @param orgUnitId The unique ID of the organization unit.
+	 * @param parentOrgUnitPath The path of the parent organization unit.
+	 * @param parentOrgUnitId The unique ID of the parent organization unit.
+	 */
+	public OrgUnit(String kind, String eTag, String name, String description, String orgUnitPath, String orgUnitId, String parentOrgUnitPath, String parentOrgUnitId) {
+		this.kind = kind;
+		this.eTag = eTag;
+		this.name = name;
+		this.description = description;
+		this.orgUnitPath = orgUnitPath;
+		this.orgUnitId = orgUnitId;
+		this.parentOrgUnitPath = parentOrgUnitPath;
+		this.parentOrgUnitId = parentOrgUnitId;
+	}
+
+	/**
+	 * Default constructor for creating an empty OrgUnit object.
+	 */
+	public OrgUnit() {
+	}
+
+	/**
 	 * Retrieves {@link #kind}
 	 *
 	 * @return value of {@link #kind}
