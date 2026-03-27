@@ -128,7 +128,6 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 */
 	class GoogleWorkspaceDataLoader implements Runnable {
 		private volatile boolean inProgress;
-		private volatile boolean flag = false;
 
 		public GoogleWorkspaceDataLoader() {
 			inProgress = true;

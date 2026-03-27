@@ -58,7 +58,7 @@ public enum CPUTemperatureEnum {
 	 * @return The name corresponding to the provided value, or null if no match is found.
 	 */
 	public static String findNameByValue(String value) {
-		CPUTemperatureEnum matchedEnum = Arrays.stream(CPUTemperatureEnum.values())
+		CPUTemperatureEnum matchedEnum = Arrays.stream(values())
 				.filter(definition -> definition.getValue().equals(value))
 				.findFirst()
 				.orElse(null);
