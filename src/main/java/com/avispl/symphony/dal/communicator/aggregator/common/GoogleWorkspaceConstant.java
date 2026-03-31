@@ -73,4 +73,13 @@ public class GoogleWorkspaceConstant {
 	public static final int MIN_VOLUME_LEVEL = 0;
 	public static final String REGEX_SERIAL_NUMBER = "^[a-zA-Z0-9]+$";
 	public static final String CPU_TEMPERATURE = "CPU_Temperature";
+
+	// Adapter metadata
+	public static final String MONITORING_CYCLE_DURATION = "LastMonitoringCycleDuration(sec)";
+	public static final String ADAPTER_VERSION = "AdapterVersion";
+	public static final String MONITORED_DEVICES_TOTAL = "MonitoredDevicesTotal";
+	public static final String ADAPTER_BUILD_DATE = "AdapterBuildDate";
+	public static final String ADAPTER_UPTIME_MIN = "AdapterUptime(min)";
+	public static final String ADAPTER_UPTIME = "AdapterUptime";
+	public static final String SYSTEM_MONITORING_CYCLE = "MonitoringCycleInterval(min)";
 }
