@@ -10,7 +10,7 @@ Currently monitored property of aggregator device are:
     - ParentName
     - UnitID
 
-Currently monitored property of aggregated device are:
+List of monitored properties of aggregated device are:
 - AnnotatedUser
 - Architecture
 - AutoUpdateExpiration

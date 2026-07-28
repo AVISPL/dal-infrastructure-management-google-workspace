@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
@@ -127,7 +128,6 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 */
 	class GoogleWorkspaceDataLoader implements Runnable {
 		private volatile boolean inProgress;
-		private volatile boolean flag = false;
 
 		public GoogleWorkspaceDataLoader() {
 			inProgress = true;
@@ -140,7 +140,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				try {
 					TimeUnit.MILLISECONDS.sleep(500);
 				} catch (InterruptedException e) {
-					// Ignore for now
+					logger.info(String.format("Sleep for 0.5 second was interrupted with error message: %s", e.getMessage()));
 				}
 
 				if (!inProgress) {
@@ -155,30 +155,39 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				if (logger.isDebugEnabled()) {
 					logger.debug("Fetching other than Chrome OS device list");
 				}
-				long currentTimestamp = System.currentTimeMillis();
-				if (!flag && nextDevicesCollectionIterationTimestamp <= currentTimestamp) {
-					populateDeviceDetails();
-					flag = true;
-				}
 
 				while (nextDevicesCollectionIterationTimestamp > System.currentTimeMillis()) {
 					try {
 						TimeUnit.MILLISECONDS.sleep(1000);
 					} catch (InterruptedException e) {
-						//
+						logger.info(String.format("Sleep for 1 second was interrupted with error message: %s", e.getMessage()));
 					}
 				}
 
 				if (!inProgress) {
 					break loop;
 				}
-				if (flag) {
-					nextDevicesCollectionIterationTimestamp = System.currentTimeMillis() + 30000;
-					flag = false;
+
+				long startCycle = System.currentTimeMillis();
+				try {
+					if (logger.isDebugEnabled()) {
+						logger.debug("Fetching devices list");
+					}
+					populateDeviceDetails();
+				} catch (Exception e) {
+					logger.error("Error occurred during device list retrieval: " + e.getMessage(), e);
 				}
 
+				try{
+					nextDevicesCollectionIterationTimestamp = System.currentTimeMillis() + (getMonitoringRate() * 60000L);
+				} catch (NoSuchMethodError error){
+					nextDevicesCollectionIterationTimestamp = System.currentTimeMillis() + 60000L;
+					logger.warn("Unsupported feature: getMonitoringRate isn't available on current Cloud Connector version.", error);
+				}
+				lastMonitoringCycleDuration = Math.max((System.currentTimeMillis() - startCycle) / 1000, 1L);
+
 				if (logger.isDebugEnabled()) {
-					logger.debug("Finished collecting devices statistics cycle at " + new Date());
+					logger.debug("Finished collecting devices statistics cycle at " + new Date() + ", total duration: " + lastMonitoringCycleDuration);
 				}
 			}
 			// Finished collecting
@@ -198,11 +207,26 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	private ExtendedStatistics localExtendedStatistics;
 
 	/**
+	 * How much time last monitoring cycle took to finish
+	 */
+	private long lastMonitoringCycleDuration;
+
+	/**
+	 * Device adapter instantiation timestamp.
+	 */
+	private long adapterInitializationTimestamp;
+
+	/**
 	 * A private final ReentrantLock instance used to provide exclusive access to a shared resource
 	 * that can be accessed by multiple threads concurrently. This lock allows multiple reentrant
 	 * locks on the same shared resource by the same thread.
 	 */
 	private final ReentrantLock reentrantLock = new ReentrantLock();
+
+	/**
+	 * Adapter metadata properties - adapter version and build date
+	 */
+	private Properties adapterProperties;
 
 	/**
 	 * A mapper for reading and writing JSON using Jackson library.
@@ -421,8 +445,10 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	 * @throws IOException if an I/O error occurs during the initialization process.
 	 */
 	public GoogleWorkspaceCommunicator() throws IOException {
+		adapterProperties = new Properties();
 		Map<String, PropertiesMapping> mapping = new PropertiesMappingParser().loadYML(GoogleWorkspaceConstant.MODEL_MAPPING_AGGREGATED_DEVICE, getClass());
 		aggregatedDeviceProcessor = new AggregatedDeviceProcessor(mapping);
+		adapterProperties.load(getClass().getResourceAsStream("/version.properties"));
 		this.setTrustAllCertificates(true);
 	}
 
@@ -481,8 +507,10 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				throw new ResourceNotReachableException("API Token cannot be null or empty, please enter valid API token in the password and username field.");
 			}
 			Map<String, String> statistics = new HashMap<>();
+			Map<String, String> dynamicStatistics = new HashMap<>();
 			List<AdvancedControllableProperty> advancedControllableProperties = new ArrayList<>();
 			ExtendedStatistics extendedStatistics = new ExtendedStatistics();
+			retrieveMetadata(statistics, dynamicStatistics);
 			retrieveCustomerId();
 			if (StringUtils.isNotNullOrEmpty(customerId)) {
 				retrieveSystemInfo();
@@ -491,6 +519,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 				populateNoneData(statistics);
 			}
 			extendedStatistics.setStatistics(statistics);
+			extendedStatistics.setDynamicStatistics(dynamicStatistics);
 			extendedStatistics.setControllableProperties(advancedControllableProperties);
 			localExtendedStatistics = extendedStatistics;
 		} finally {
@@ -580,6 +609,7 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		if (logger.isDebugEnabled()) {
 			logger.debug("Internal init is called.");
 		}
+		adapterInitializationTimestamp = System.currentTimeMillis();
 		executorService = Executors.newFixedThreadPool(1);
 		executorService.submit(deviceDataLoader = new GoogleWorkspaceDataLoader());
 		super.internalInit();
@@ -621,6 +651,34 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 	protected HttpHeaders putExtraRequestHeaders(HttpMethod httpMethod, String uri, HttpHeaders headers) {
 		headers.setBearerAuth(apiToken);
 		return headers;
+	}
+
+	/**
+	 * Retrieves metadata information and updates the provided statistics and dynamic map.
+	 *
+	 * @param stats the map where statistics will be stored
+	 * @param dynamicStatistics the map where dynamic statistics will be stored
+	 */
+	private void retrieveMetadata(Map<String, String> stats, Map<String, String> dynamicStatistics) {
+		try {
+			dynamicStatistics.put(GoogleWorkspaceConstant.MONITORING_CYCLE_DURATION, String.valueOf(lastMonitoringCycleDuration));
+			stats.put(GoogleWorkspaceConstant.ADAPTER_VERSION,
+					getDefaultValueForNullData(adapterProperties.getProperty("aggregator.version")));
+			stats.put(GoogleWorkspaceConstant.ADAPTER_BUILD_DATE,
+					getDefaultValueForNullData(adapterProperties.getProperty("aggregator.build.date")));
+			long adapterUptime = System.currentTimeMillis() - adapterInitializationTimestamp;
+
+			stats.put(GoogleWorkspaceConstant.ADAPTER_UPTIME_MIN, String.valueOf(adapterUptime / (1000 * 60)));
+			stats.put(GoogleWorkspaceConstant.ADAPTER_UPTIME, normalizeUptime(adapterUptime / 1000));
+			try{
+				stats.put(GoogleWorkspaceConstant.SYSTEM_MONITORING_CYCLE, String.valueOf(getMonitoringRate()));
+			}catch (NoSuchMethodError error){
+				logger.warn("Unsupported feature: getMonitoringRate isn't available on current Cloud Connector version.", error);
+			}
+			dynamicStatistics.put(GoogleWorkspaceConstant.MONITORED_DEVICES_TOTAL, String.valueOf(aggregatedDeviceList.size()));
+		} catch (Exception e) {
+			logger.error("Failed to populate metadata information", e);
+		}
 	}
 
 	/**
@@ -1430,5 +1488,37 @@ public class GoogleWorkspaceCommunicator extends RestCommunicator implements Agg
 		dropDown.setLabels(values);
 
 		return new AdvancedControllableProperty(name, new Date(), dropDown, initialValue);
+	}
+
+	/**
+	 * Uptime is received in seconds, need to normalize it and make it human-readable, like
+	 * 1 day 5 hour 12 minute 55 minute
+	 * Incoming parameter is may have a decimal point, so in order to safely process this - it's rounded first.
+	 * We don't need to add a segment of time if it's 0.
+	 *
+	 * @param uptimeSeconds value in seconds
+	 * @return string value of format 'x d x hr x min x sec'
+	 */
+	public static String normalizeUptime(long uptimeSeconds) {
+		StringBuilder normalizedUptime = new StringBuilder();
+
+		long seconds = uptimeSeconds % 60;
+		long minutes = uptimeSeconds % 3600 / 60;
+		long hours = uptimeSeconds % 86400 / 3600;
+		long days = uptimeSeconds / 86400;
+
+		if (days > 0) {
+			normalizedUptime.append(days).append(" d ");
+		}
+		if (hours > 0) {
+			normalizedUptime.append(hours).append(" hr ");
+		}
+		if (minutes > 0) {
+			normalizedUptime.append(minutes).append(" min ");
+		}
+		if (seconds > 0 || normalizedUptime.length() == 0) {
+			normalizedUptime.append(seconds).append(" sec");
+		}
+		return normalizedUptime.toString().trim();
 	}
 }

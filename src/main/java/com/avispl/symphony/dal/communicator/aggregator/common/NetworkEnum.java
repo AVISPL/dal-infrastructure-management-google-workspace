@@ -46,7 +46,7 @@ public enum NetworkEnum {
 	 * @throws IllegalStateException if the specified name is not supported
 	 */
 	public static NetworkEnum getByName(String name) {
-		Optional<NetworkEnum> property = Arrays.stream(NetworkEnum.values()).filter(group -> group.getName().equals(name)).findFirst();
+		Optional<NetworkEnum> property = Arrays.stream(values()).filter(group -> group.getName().equals(name)).findFirst();
 		if (property.isPresent()) {
 			return property.get();
 		} else {
