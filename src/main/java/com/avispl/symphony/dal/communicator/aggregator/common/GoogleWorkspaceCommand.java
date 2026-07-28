@@ -12,7 +12,7 @@ package com.avispl.symphony.dal.communicator.aggregator.common;
  * @since 1.0.0
  */
 public class GoogleWorkspaceCommand {
-	public static final String USER_COMMAND = "/admin/directory/v1/users?domain=&maxResults=5";
+	public static final String USER_COMMAND = "/admin/directory/v1/users?customer=my_customer&maxResults=5";
 	public static final String ORG_UNIT_COMMAND = "/admin/directory/v1/customer/{CustomerId}/orgunits";
 	public static final String CHROME_OS_COMMAND = "/admin/directory/v1/customer/{CustomerId}/devices/chromeos?maxResults=400&orgUnitPath={orgUnit}&query={serialNumber}";
 	public static final String PARENT_ORG_UNIT_COMMAND = "/admin/directory/v1/customer/{CustomerId}/orgunits/";
